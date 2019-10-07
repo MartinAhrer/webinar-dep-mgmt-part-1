@@ -1,0 +1,60 @@
+ifndef::imagesdir[:imagesdir: ../images]
+
+[background-color="#0056a5"]
+== Images and layers
+
+=== Anatomy of a Docker image
+
+image::container-layers.jpg[height=80%,width=80%]
+
+[.notes]
+--
+* A Docker image is built up from a series of layers.
+* Each layer represents an instruction in the image’s Dockerfile
+* A storage driver handles the details about the way these layers interact with each other
+* Different storage drivers are available, which have advantages and disadvantages in different situations.
+** e.g. AUFS, overlay, overlay2, btrfs,zfs
+* All drivers use stackable image layers and the copy-on-write (CoW) strategy for writing files
+--
+
+[background-color="#0056a5"]
+== Container and layers
+
+=== Copy-On Write (CoW)
+
+image::container-layers.jpg[height=80%,width=80%]
+
+[.notes]
+--
+* When you start a container, a thin writable container layer is added on top of the other layers.
+* Any changes the container makes to the filesystem are stored here
+** Search through the image layers for the file to update
+** Perform a copy_up operation on the first copy of the file that is found, to copy the file to the container’s writable layer.
+* Write heavy applications should use volumes to store data for more efficient I/O
+* COW performance is heavily dependent on the storage driver
+--
+
+=== Storage layer
+
+image::sharing-layers.jpg[height=80%,width=80%]
+
+[.notes]
+--
+* Creating a new container from an image just adds a new layer for container storage
+* Not only does copy-on-write save space, but it also reduces start-up time.
+* When you start a container (or multiple containers from the same image), Docker only needs to create the thin writable container layer.
+* Likewise when deleting a container, only the writable layer has to be deleted
+--
+
+=== Volumes
+
+image::shared-volume.jpg[height=80%,width=80%]
+
+[.notes]
+--
+* Data volumes are not controlled by the storage driver.
+* Reads and writes to data volumes bypass the storage driver and operate at native host speeds.
+* You can mount any number of data volumes into a container.
+* Multiple containers can also share one or more data volumes.
+* When a container is deleted, any data stored in data volumes persists on the Docker host.
+--

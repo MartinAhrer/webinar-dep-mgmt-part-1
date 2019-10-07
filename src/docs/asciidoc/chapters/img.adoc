@@ -1,0 +1,81 @@
+ifndef::imagesdir[:imagesdir: ../images]
+
+[background-color="#0056a5"]
+== img
+
+=== img
+
+* A cli tool built *on top of buildkit*
+* Build container images as an *unprivileged user*
+* No Docker daemon required during build
+
+https://github.com/genuinetools/img
+
+=== Build image
+[.subline]
+Run native `img` installation
+
+[source,bash]
+----
+img build -f Dockerfile.pre-multistage -t continuousdelivery:img ./
+----
+
+[.notes]
+--
+`img` is almost a replacement for docker's `build`, `tag`, `push`, `pull`` ... commands.
+--
+
+=== Build image
+[.subline]
+Run Docker container `img`
+
+[source,bash]
+----
+include::../../../docker/img-build.sh[tag=script]
+----
+
+[.notes]
+--
+Secure computing mode (_seccomp_) is a Linux kernel feature. `--security-opt seccomp=unconfined` disables the default seccomp profile
+--
+
+=== Build and save image
+[.subline]
+Run Docker container `img`
+
+* Need shell to `img build ... && img save ...` in single container invocation
+
+[source,bash]
+----
+include::../../../docker/Dockerfile.img-shell[]
+----
+
+[source,bash]
+----
+include::../../../docker/img-save.sh[tag=debug]
+----
+
+[.notes]
+--
+* `r.j3ss.co/img` does not have a shell included
+* We are building inside an isolated container
+* Image built by `img build` is only available in the build cache
+* We have to export the build cache as tar.
+--
+
+=== Build and save image
+[.subline]
+Export image as tar
+
+[source,bash]
+----
+include::../../../docker/img-save.sh[tag=script]
+----
+
+[.notes]
+--
+--
+
+=== Build and save image
+
+screencast:img-save[height=80% width=80% rows=20 title="Building image and exporting as tar" speed=3 font-size=small]

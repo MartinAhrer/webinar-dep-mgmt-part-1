@@ -1,0 +1,47 @@
+ifndef::imagesdir[:imagesdir: ../images]
+
+[background-color="#0056a5"]
+== Build Pipeline
+
+=== Goal
+* Implement *simple* build pipeline
+* Can't afford complex *build infrastructure* (e.g utilize Docker Hub)
+* Have *single script* (Dockerfile) for compiling, testing and creating the Docker image
+
+
+=== Compile source, build image
+
+[source,bash,linenums]
+.`Dockerfile`
+----
+include::../../../docker/Dockerfile.pre-multistage[linenums]
+----
+<1> Script part one is compiling and packaging the application
+<2> Script part two is adding the application package to the image
+
+WARNING: This is adding image content not required at runtime!
+
+[.notes]
+--
+* We have 2 blocks responsible for
+** Packaging the application
+** Packaging the application into a Docker image
+* The base image includes the tools for compiling and packaging a Java application (a JDK)
+* This adds image content not required in the final image (a JRE would be sufficient)
+--
+
+=== Implementing build flow
+
+[source,bash]
+.Dockerfile
+----
+ARG docsTest=false
+RUN [[ "${docsTest}" == true ]] && ./gradlew docsTest <1>
+----
+<1> Conditionally execute a Gradle build tool command.
+
+[source,bash]
+.Build command passing in a build argument
+----
+docker image build --build-arg docsTest=true .
+----

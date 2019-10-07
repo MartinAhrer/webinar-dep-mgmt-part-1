@@ -1,0 +1,171 @@
+ifndef::imagesdir[:imagesdir: ../images]
+
+[background-color="#0056a5"]
+== Optimizing for Image size
+
+=== Use small base images
+
+* Choose light distribution (such as `alpine`)
+* Choose trimmed version of distribution (e.g. Debian `jessie-slim`)
+* Google *distro-less* images (e.g. `gcr.io/distroless/java`)
+
+[.notes]
+--
+* Obviously reducing the size of the content to include an image this also has some impact on build speed.
+** Docker images exist for most popular linux distributions (redhat, ubuntu, debian, alpine)
+** Many distributions offer versions that have been downsized (e.g. debian jessie-slim)
+** The Google images are not based on a distribution, it's just the kernel and whatever is required to run it.
+--
+
+=== Reduce image file system content
+
+* Install only *required packages* through `RUN`
+* `COPY` only *required files* (`.dockerignore` will exclude content from the build context only)
+* Remove temporary files (e.g. created by package managers)
+
+=== Reduce number of layers
+
+* Only the instructions `RUN`, `COPY`, and `ADD` create layers.
+* Other instructions create temporary intermediate images, and do not increase the size of the image.
+* Combine multiple `RUN` instructions to squash layers.
+
+----
+# Prefer command chaining over
+RUN command1 && command2
+# executing individual commands with separate RUN instructions
+RUN command3
+RUN command4
+----
+
+[.notes]
+--
+*
+--
+
+[background-color="#0056a5"]
+== Optimizing for Build Speed
+
+=== Use a `.dockerignore`
+
+* The `docker image build` command sends the build context to the daemon
+** Sending the context is almost always a remote operation (socket, http, ...)
+** Only include files that will be added to the image using `COPY` or `ADD`
+
+image::architecture.svg[height=70%,width=70%]
+
+=== Use the build cache
+[.subline]
+General considerations
+
+* Docker looks for an existing image in its cache that it can reuse, rather than creating a new (duplicate) image
+* If a build instruction is detected to cause a layer change, cache for all instructions following are invalidated.
+* The build cache is on by default but can be disabled
+
+[source,shell]
+----
+docker image build --no-cache=true ./
+----
+
+=== Use the build cache
+[.subline]
+Cache behaviour of `ADD` and `COPY`
+
+* *Contents* of the file(s) are examined and a *checksum* is calculated.
+* The *last-modified* and *last-accessed* times of the file(s) are *not considered*.
+* During the cache lookup, the checksum is compared against the checksum in the existing images.
+* If *anything has changed* in the file(s), such as the contents and metadata, then the *cache is invalidated*.
+
+=== Use the build cache
+[.subline]
+Cache behaviour of `RUN`
+
+* Cache checking does not look at the files eventually manipulated by `RUN`
+* The command string itself is used to find a cache match
+
+IMPORTANT: Essentially changing a RUN instruction invalidates the layer.
+
+=== Use the build cache
+[.subline]
+Cache behaviour of `RUN`
+
+[source,bash,linenums]
+.`Dockerfile`
+----
+include::../../../docker/Dockerfile.packagemanager[tag=packagemanager]
+----
+<1> Can potentially break because the package manager might work with outdated package info.
+
+
+[.notes]
+--
+Shell demo
+----
+docker image build -f Dockerfile.packagemanager ./
+----
+--
+
+=== Use the build cache
+[.subline]
+Cache behaviour of `RUN`
+
+[source,bash,linenums]
+.`Dockerfile`
+----
+include::../../../docker/Dockerfile.packagemanager2[tag=packagemanager]
+----
+<1> Recommended when working with package managers
+
+[.notes]
+--
+Shell demo
+[source,bash]
+----
+docker image build -f Dockerfile.packagemanager2 ./
+----
+--
+
+=== Use the build cache
+[.subline]
+Arrange Dockerfile instructions for efficient cache usage
+
+[source,bash]
+.`Dockerfile`
+----
+include::../../../docker/Dockerfile[]
+----
+<1> The software to package as image is likely to change frequently, so better move it to the bottom!
+
+[.notes]
+--
+Shell demo
+
+[source,bash]
+----
+docker image build -f Dockerfile ./
+----
+--
+
+== Dockerfile Lint
+
+=== hadolint
+
+https://hub.docker.com/r/lukasmartinelli/hadolint/
+
+* Checking Dockerfile instructions
+* Checking shell commands
+
+[source,bash]
+----
+docker run --rm -i lukasmartinelli/hadolint < Dockerfile
+----
+
+[.notes]
+--
+Shell demo
+
+[source,bash]
+----
+docker run --rm -i lukasmartinelli/hadolint < Dockerfile
+----
+--
+

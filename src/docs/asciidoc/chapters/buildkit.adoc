@@ -1,0 +1,187 @@
+ifndef::imagesdir[:imagesdir: ../images]
+
+[background-color="#0056a5"]
+== Build Kit
+
+=== Experimental Feature
+
+* Introduced with Docker 17.05
+* Has to be enabled explicitely
+* Pluggable frontends for providing new (custom) features provided as Docker image
+** Cache mount
+** SSH secret mount
+** SSH connection forwarding
+* Major performance improvements
+
+[.notes]
+--
+* SSH connection forwarding avoids sharing SSH key file content but forwards an SSH agents connection.
+* Content to be added to the image is exchanged between host and daemon in rsync style.
+* Dockerfile instructions can be processed in parallel
+--
+
+=== Enable globally
+
+.`/etc/docker/daemon.json`
+[source,bash]
+----
+{ "features": { "buildkit": true } }
+----
+
+=== Enable locally
+
+.Environment variable `DOCKER_BUILDKIT`
+[source,bash,linenums]
+----
+export DOCKER_BUILDKIT=1
+docker image build ...
+# or
+DOCKER_BUILDKIT=1 docker image build ...
+----
+
+
+=== Experimental Build CLI
+[.subline]
+Enter `buildx`
+
+`DOCKER_CLI_EXPERIMENTAL` enables experimental CLI features
+
+[source,bash]
+----
+export DOCKER_CLI_EXPERIMENTAL=enabled
+----
+
+The `buildx` command has BuildKit enabled automatically
+
+[source,bash]
+----
+docker buildx build -f Dockerfile.multistage.buildkit .
+----
+
+=== Enable frontend
+
+* Add a `# syntax` comment to Dockerfile to select a frontend
+
+[source,bash,linenums]
+----
+# syntax = docker/dockerfile:1.0-experimental
+----
+
+[.notes]
+--
+* BuildKit frontends are provided as Docker image
+--
+
+=== Build performance
+[.subline]
+Live demo - classic build
+
+[source,bash,linenums]
+----
+include::../../../docker/classic-build-speed.sh[tag=build]
+----
+
+.Build log
+[source,text,linenums]
+----
+Sending build context to Docker daemon  643.1kB
+...
+real    0m20.460s
+user    0m0.123s
+sys     0m0.081s
+----
+
+=== Build performance
+[.subline]
+Live demo - BuildKit build
+
+[source,bash,linenums]
+----
+include::../../../docker/buildkit-build-speed.sh[tag=build]
+----
+
+.Build log
+[source,text,linenums]
+----
+ => => transferring dockerfile: 134B
+ => => transferring context: 2B
+ => => transferring context: 278.14kB
+...
+real    0m18.689s
+user    0m0.137s
+sys     0m0.080s
+----
+
+[.notes]
+--
+* BuildKit transfers only the required files while classic build transfers all of the context (both honoring `.gitignore`)
+* BuildKit can run tasks in parallel (not seen here but very likely in multistage builds)
+--
+
+=== RUN mount types
+
+* `RUN --mount=type=cache ...`
+* `RUN --mount=type=tmpfs ...`
+* `RUN --mount=type=secret ...`
+* `RUN --mount=type=ssh ...`
+
+
+=== Mounting a cache
+
+[source,bash,linenums]
+----
+include::../../../docker/Dockerfile.multistage.buildkit[tag=builder,linenums,start=8]
+----
+<1> The option `--mount=type=cache,id=gradle,target=/root/.gradle` mounts a cache layer to `/root/.gradle` in the build container
+
+=== Mounting a cache
+[.subline]
+Live Demo
+
+.Build with cache
+[source,bash,linenums]
+----
+docker buildx build --build-arg TIMESTAMP=1 -f Dockerfile.multistage.buildkit.
+docker buildx build --build-arg TIMESTAMP=2 -f Dockerfile.multistage.buildkit.
+----
+
+.Clear cache and rebuild
+[source,bash,linenums]
+----
+docker builder prune --filter type=exec.cachemount
+docker buildx build --build-arg TIMESTAMP=2 -f Dockerfile.multistage.buildkit.
+----
+
+=== Mounting a secret
+
+.`Dockerfile`
+[source,bash]
+----
+RUN --mount=type=secret,id=github.key,required git clone ssh://github.com/continuousdelivery.git ./
+----
+
+.Pass SSH secret to build command
+[source,bash]
+----
+docker image build --secret id=github.key,src=path/to/github.key  .
+----
+
+=== BuildKit Key Features
+
+* Automatic garbage collection
+* Extendable frontend formats
+* Concurrent dependency resolution
+* Efficient instruction caching
+* Build cache import/export
+* Nested build job invocations
+* Distributable workers
+* Multiple output formats
+* Pluggable architecture
+* Execution without root privileges
+
+=== buildx Key Features
+
+* Multiple concurrent isolated builder instances
+* Building against multiple nodes concurrently
+** Useful for build farms
+** Or multi-platform/architecture builds

@@ -1,0 +1,5 @@
+FROM alpine
+#tag::packagemanager[]
+RUN apk update && \
+    apk add --no-cache git bash # <1>
+#end::packagemanager[]

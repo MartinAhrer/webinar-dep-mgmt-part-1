@@ -1,0 +1,109 @@
+ifndef::imagesdir[:imagesdir: ../images]
+
+[background-color="#0056a5"]
+== Multistage Build
+
+=== Shortcomings of single Dockerfile pipeline
+
+* Produces images larger than required
+* Potentially images include secrets (e.g. git clone is using ssh)
+* Caching of temporary files (e.g. Maven, Gradle, npm)
+* Counter-productive caching (e.g. git clone instruction is cached)
+
+[.notes]
+--
+* We have to add build tools into the image for compiling, assembling
+* For accessing other build relevant services we may add secrets
+* Build tools rely on caching downloaded artifacts for build performance
+* Docker's layer caching may prevent properly updating an image
+--
+
+=== Shortcomings of single Dockerfile pipeline
+[.subline]
+How to work around
+
+* => Split into multiple files `Dockerfile.build`, `Dockerfile` and run multiple builds and copy built artifacts between images
+* => Use multi-stage build introduced with Docker 17.x
+
+[.notes]
+--
+* Splitted Dockerfiles is not demonstrated here. It is an inefficient and cumbersome workaround
+* Multi-stage build should be preferred
+--
+
+[%notitle]
+=== Enter Docker multi-stage build
+
+Enter Docker multi-stage build
+
+=== Multistage Dockerfile
+[.subline]
+Compile source, build artifact
+
+[source,bash,linenums]
+----
+include::../../../docker/Dockerfile.multistage[tag=builder,linenums]
+----
+<1> Implement the first stage, the builder image which uses a JDK for supplying a compiler
+<2> Add more build tools
+<3> Clone repository
+<4> Build repository
+
+[.notes]
+--
+* A build stage (a kind of internal image can be named)
+--
+
+=== Multistage Dockerfile
+[.subline]
+Build the container image
+
+[source,bash,linenums]
+----
+include::../../../docker/Dockerfile.multistage[tag=product,linenums,start=8]
+----
+<1> Implement the second stage, the final image using a JRE
+<2> Copy build artifact from *builder* stage(image)
+
+The final image only contains the content required to run the application (no compiler, etc.)
+
+[.notes]
+--
+* We can start another image and name it
+* We can copy any content from any other image, even images not built by one of the previous stages
+* => We can use composition to pick content from images
+--
+
+=== Multistage Dockerfile
+[.subline]
+The full `Dockerfile`
+
+[source,bash,linenums]
+----
+include::../../../docker/Dockerfile.multistage[tag=*,linenums]
+----
+
+=== Cached layer symptom
+
+* The above `RUN git clone` is still subject to caching an thus the build may not recompile the source
+* The layer has to be invalidated manually by adding an instruction we use to force cache invalidation
+
+[source,bash]
+----
+ARG TIMESTAMP
+RUN git clone https://github.com/MartinAhrer/continuousdelivery.git ./
+----
+
+[source,bash]
+----
+docker image build --build-arg TIMESTAMP=$(date +%Y%m%d-%H%M%S) .
+----
+
+WARNING: Rather use `COPY` or `ADD` for adding source to the builder image. That is how Docker based build tools would typically work!
+
+=== No Caching across build invocations
+
+* Build tool rely on build caches for keeping
+** Downloaded tools
+** Downloaded dependencies
+** ...

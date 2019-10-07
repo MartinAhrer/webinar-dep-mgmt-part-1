@@ -1,0 +1,35 @@
+image: 11-jdk-hotspot
+stages:
+  - build
+  - deploy
+
+cache:
+  key: ${CI_JOB_NAME}
+  paths:
+  - /root/.gradle
+
+slide-deck:
+  stage: build
+  script:
+    - ./gradlew asciidoctor
+  artifacts:
+    paths:
+      - build/
+
+pages:
+  image: alpine:latest
+  stage: deploy
+  environment: staging
+
+  dependencies:
+    - slide-deck
+
+  script:
+    - mkdir -p ./public
+    - cp -rv ./build/asciidoc/* ./public/
+
+  artifacts:
+    paths:
+    - public
+  only:
+  - master

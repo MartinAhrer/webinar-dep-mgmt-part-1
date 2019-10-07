@@ -1,0 +1,91 @@
+ifndef::imagesdir[:imagesdir: ../images]
+
+[background-color="#0056a5"]
+== Google Container Tools Jib
+
+=== Jib
+
+* No Docker daemon required during build
+* Does not require any special privileges
+* Utilizes Google's distroless base images
+* Highly opinionated on building Images for Java applications
+* Highly optimized to just deploy the layers that changed
+* Part of Google Container Tools
+
+https://github.com/GoogleContainerTools/jib
+
+[.notes]
+--
+* Highly optimized to just deploy the layers that changed: Separate layers for the application code ,dependencies and the base image
+--
+
+=== Gradle Plugin
+
+.Gradle build script
+[source,groovy]
+----
+plugins {
+  id 'com.google.cloud.tools.jib' version '1.2.0'
+}
+
+jib {
+    to {
+        image = "martinahrer/continuousdelivery:jib-${project.version}"
+    }
+}
+----
+
+.Build image and push to registry
+[source,bash]
+----
+./gradlew jib
+----
+
+[.notes]
+--
+Demo with project `continuousdelivery`
+--
+
+=== Jib built layers
+
+[source,bash]
+----
+docker image history martinahrer/continuousdelivery:jib-0.1 -H
+IMAGE          CREATED BY                SIZE      COMMENT
+a60b44a57eb4   jib-gradle-plugin:1.2.0   4.44kB    classes #<1>
+<missing>      jib-gradle-plugin:1.2.0   1.84kB    resources
+<missing>      jib-gradle-plugin:1.2.0   45.7MB    dependencies #<2>
+----
+<1> High rate of changes (top of layer stack)
+<2> Low rate of changes (bottom of layer stack)
+
+[.notes]
+--
+* We have layers for different types of binary resources
+** classes (contains compiled application code)
+** resources (contains application resources)
+** dependencies (contains application libraries)
+--
+
+=== Maven plugin
+
+.Maven build plugin configuration
+[source,text]
+----
+<plugin>
+    <groupId>com.google.cloud.tools</groupId>
+    <artifactId>jib-maven-plugin</artifactId>
+    <version>1.2.0</version>
+    <configuration>
+      <to>
+        <image>martinahrer/continuousdelivery:jib-${project.version}</image>
+      </to>
+    </configuration>
+</plugin>
+----
+
+.Maven build command
+[source,bash]
+----
+mvn jib:build
+----

@@ -1,0 +1,27 @@
+ifndef::imagesdir[:imagesdir: ../images]
+
+[background-color="#0056a5"]
+== Google Container Tools kaniko
+
+=== kaniko
+
+* Built for Kubernetes
+* No Docker daemon required during build
+* Does not require any special privileges
+* Has no support for buildkit
+* Part of Google Container Tools
+
+https://github.com/GoogleContainerTools/kaniko
+
+=== Built for running in a container
+
+[source,bash]
+----
+include::../../../docker/kaniko.sh[tag=script]
+----
+
+.Configuration (authentication) for Docker registry
+[source,javascript]
+----
+include::../../../docker/config.json[]
+----

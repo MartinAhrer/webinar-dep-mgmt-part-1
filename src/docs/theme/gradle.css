@@ -86,13 +86,13 @@ body {
 }
 
 .title h1, .preamble p {
-    color: white;
+    color: grey;
     text-align: center;
     font-size: 1em;
 }
 
 .title h2 {
-    color: white;
+    color: grey;
     font-size: 1.6em;
 }
 
@@ -442,6 +442,3 @@ section.has-dark-background h3 {
     font-size: 1em;
     font-weight: bold
 }
-
-
-

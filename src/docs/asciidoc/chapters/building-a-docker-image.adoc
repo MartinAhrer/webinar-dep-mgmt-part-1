@@ -1,0 +1,79 @@
+ifndef::imagesdir[:imagesdir: ../images]
+
+[background-color="#0056a5"]
+== Building a Docker image
+
+=== Dockerfile
+
+[source,bash]
+----
+FROM openjdk:8-jre-alpine  #<1>
+LABEL maintainer='Martin Ahrer <this@martinahrer.at>' #<2>
+RUN mkdir /opt/app  #<3>
+EXPOSE 8080 #<4>
+CMD java -jar /opt/app/app.jar  #<5>
+COPY continuousdelivery.jar /opt/app/app.jar #<6>
+----
+<1> Pull in the *layers* of base image `openjdk:8-jre-alpine`
+<2> We can add any label (this is just *metadata*)
+<3> Run any command (this produces a *layer*)
+<4> Mark a port as candidate for port publishing (just *metadata*)
+<5> Set the container startup command  (this is just *metadata*)
+<6> Add a file to the image (this produces a *layer*)
+
+=== Dockerfile
+
+[source,bash]
+----
+docker image build \
+    -f Dockerfile \ #<1>
+    -t app \ #<2>
+    ./ #<3>
+----
+<1> The Dockerfile path (`-f Dockerfile` is default)
+<2> Assigns the tag `app` to the image (can also contain a version, user, and a registry URL, e.g. `r.j3ss.co/img:latest`)
+<3> The Docker build context
+
+[.notes]
+--
+* `Dockerfile` contains the instructions for building image content (i.e. the file system) and the image metadata.
+* *Build context* comprises the file system content that can be copied to the image.
+--
+
+[background-color="#0056a5"]
+== Best practices
+
+[%notitle]
+=== A container should be ephemeral
+
+A container should be ephemeral
+
+[.notes]
+--
+* *A container should be ephemeral*: By “ephemeral”, we mean that the container can be stopped and destroyed, then rebuilt and replaced with an absolute minimum set up and configuration.
+--
+
+[%notitle]
+=== Single responsibility principle
+
+Single responsibility principle
+
+[.notes]
+--
+* *Single responsibility principle*:
+** A container should have only *one concern*.
+** *Decoupling* applications into multiple containers makes it easier to *scale horizontally* and reuse containers.
+** For instance, a web application stack might consist of three separate containers, each with its own unique image, to manage the web application, database, and an in-memory cache in a decoupled manner.
+--
+
+[%notitle]
+=== Immutable server principle
+
+Immutable server principle
+
+[.small]#a.k.a _The phoenix server approach_#
+
+[.notes]
+--
+* *Immutable server principle*: When we detect a problem in a container we don't patch it, we build a new image and re-create the container.
+--

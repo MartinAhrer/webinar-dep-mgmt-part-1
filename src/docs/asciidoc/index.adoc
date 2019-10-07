@@ -5,38 +5,53 @@ ifndef::sourcedir[:sourcedir: ../java]
 :navigation:
 :menu:
 :status:
-:title-slide-background-image: title.jpeg
+//:title-slide-background-image: title.jpeg
 :title-slide-transition: zoom
 :title-slide-transition-speed: fast
 :icons: font
 
-= : Dependency Management with Gradle
+[background-color="#0056a5"]
+= : Building Docker Images
 
-+++<h2>+++
-Part 1 - Fundamentals
-+++</h2>+++
++++<h3>+++
+A Docker image deep dive
++++</h3>+++
 
-Cédric Champeau (@CedricChampeau) & Louis Jacomet (@ljacomet) - Gradle Inc.
+Martin Ahrer (@kodepreacher)
 
-== Who are we?
+[background-color="#0056a5"]
+== Agenda
 
-image::who-s-who.png[height=250,width=520]
+* What is a Docker image
+* What is a Dockerfile
+* Best practices
+* Optimizing for image size and build speed
+* Implementing a simple build pipeline with multistage build
+* BuildKit
+* Building in restricted environments with
+** img, Kaniko, Jib
 
-Dependency management team
 
-include::chapters/about-gradle.adoc[]
 
-include::chapters/intro.adoc[]
 
-[background-color="#01303a"]
-== Demo
+include::chapters/anatomy-of-a-docker-image.adoc[]
 
-include::chapters/repositories.adoc[]
+include::chapters/building-a-docker-image.adoc[]
 
-include::chapters/core-concepts.adoc[]
+include::chapters/optimizing-build.adoc[]
 
-include::chapters/controlling-dependency-versions.adoc[]
+include::chapters/build-pipeline.adoc[]
 
-include::chapters/structuring.adoc[]
+include::chapters/multistage-build.adoc[]
 
-include::chapters/wrapup.adoc[]
+include::chapters/buildkit.adoc[]
+
+include::chapters/alternatives.adoc[]
+
+[background-color="#0056a5"]
+[%notitle]
+== Thank you
+
+Thank you for listening!
+
+Questions ?

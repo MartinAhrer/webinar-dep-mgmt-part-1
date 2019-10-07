@@ -1,0 +1,22 @@
+ifndef::imagesdir[:imagesdir: ../images]
+
+[background-color="#0056a5"]
+== Building images in restricted environments
+[.subline]
+Alternative image build tools
+
+=== Restricted environments
+
+* Building a Docker image (obviously) requires a Docker daemon
+* This means running with root privileges
+* Ever run a `docker image build` through an CD pipeline that is piling up garbage images?
+* Have very tight security on your Kubernetes cluster not allowing privileged containers?
+
+
+include::jib.adoc[]
+
+include::kaniko.adoc[]
+
+include::img.adoc[]
+
+

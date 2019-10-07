@@ -1,0 +1,22 @@
+# syntax = docker/dockerfile:1.0-experimental
+
+#tag::builder[]
+FROM openjdk:8-jdk-alpine AS builder
+WORKDIR /project
+RUN apk update && apk add --no-cache git bash
+# TIMESTAMP argument is required for invalidating cache and trigger a rebuild of the following layers
+ARG TIMESTAMP
+RUN git clone https://github.com/MartinAhrer/continuousdelivery.git ./
+RUN ./gradlew assemble --no-daemon
+#end::builder[]
+
+# docker system df -v  # shows the cache
+
+#tag::product[]
+FROM openjdk:8-jre-alpine AS release
+LABEL maintainer='Martin Ahrer <this@martinahrer.at>'
+RUN mkdir -p /opt/app
+EXPOSE 8080
+CMD java -jar /opt/app/app.jar
+COPY --from=builder /project/build/libs/continuousdelivery-0.1.jar /opt/app/app.jar
+#end::product[]
